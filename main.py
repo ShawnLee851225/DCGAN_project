@@ -50,8 +50,8 @@ if argparse_module:
     parser.add_argument('--training_data_path',type=str,default='./training_process_data/',help='output training data path')
     parser.add_argument('--image_size',type=int,default= 64,help='image size')
     parser.add_argument('--num_classes',type=int,default= 2,help='num classes')
-    parser.add_argument('--batch_size',type=int,default= 64,help='batch_size')
-    parser.add_argument('--num_epoch',type=int,default= 100,help='num_epoch')
+    parser.add_argument('--batch_size',type=int,default= 1024,help='batch_size')
+    parser.add_argument('--num_epoch',type=int,default= 10000,help='num_epoch')
     parser.add_argument('--nz',type=int,default= 100)
     parser.add_argument('--ngf',type=int,default= 16)
     parser.add_argument('--ndf',type=int,default= 16)
@@ -68,7 +68,7 @@ if argparse_module:
 """----------function----------"""
 train_transform = transforms.Compose([
     transforms.ToTensor(), 
-    transforms.Resize((args.image_size,args.image_size),interpolation = 3),
+    transforms.Resize((args.image_size,args.image_size)),
     #transforms.RandomHorizontalFlip(p=0.5),  # 水平翻轉，概率為0.5
     #transforms.RandomVerticalFlip(p=0.5),    # 垂直翻轉，概率為0.5
     #transforms.RandomRotation(90),
@@ -127,7 +127,6 @@ if __name__ == '__main__':
             label_true = torch.full((data[0].size(0),),0,dtype=torch.float,device=device)
             batch_loss_true = loss(train_pred, label_true)
             batch_loss_true.backward()
-            optimizerD.step()
 
             #modelG create fakeimage
             noise = torch.randn(data[0].size(0),args.nz,1,1).to(device)
@@ -156,7 +155,7 @@ if __name__ == '__main__':
         modelD_loss_point.append(batch_loss_modelD.item())
         modelG_loss_point.append(batch_loss_modelG.item())
 
-        if (epoch+1)%5 == 0:
+        if (epoch+1)%50 == 0:
             with torch.no_grad():
                 # fake image
                 noise = torch.randn(1,args.nz,1,1).to(device)
@@ -164,8 +163,8 @@ if __name__ == '__main__':
                 fake_image = transforms.ToPILImage()((fake[0].cpu()+1)/2).convert('RGB')
                 fake_image.save(args.training_data_path + str(epoch+1) + "fake.jpg")
                 # save model
-                torch.save(modelD.state_dict(), args.modelpath +args.modelD + '.pth')
-                torch.save(modelG.state_dict(), args.modelpath +args.modelG + '.pth')
+        torch.save(modelD.state_dict(), args.modelpath +args.modelD + '.pth')
+        torch.save(modelG.state_dict(), args.modelpath +args.modelG + '.pth')
     if show_GANloss_switch:
         show_loss_graph()
 
